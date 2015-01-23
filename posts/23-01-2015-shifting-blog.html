@@ -6,16 +6,16 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Shifting my blog from http://iam-khush.blogspot.in to Github">
+    <meta name="author" content="Ankush Chadda">
 
-    <title>Ankush Chadda's Blog - OpenPad</title>
+    <title>Starting my new blog</title>
 
     <!-- Bootstrap Core CSS -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link href="css/clean-blog.min.css" rel="stylesheet">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
@@ -44,14 +44,14 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">WebPad</a>
+                <a class="navbar-brand" href="/index.html">WebPad</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
                     <li>
-                        <a href="index.html">Home</a>
+                        <a href="/index.html">Home</a>
                     </li>
                     <li>
                         <a href="http://ankushchadda.in">My HomeSite</a>
@@ -65,78 +65,53 @@
 
     <!-- Page Header -->
     <!-- Set your background image for this header on the line below. -->
-    <header class="intro-header" style="background-image: url('img/home-bg.jpg')">
+    <header class="intro-header" style="background-image: url('/img/post-bg.jpg')">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <div class="site-heading">
-                        <h1>WebPad</h1>
-                        <hr class="small">
-                        <span class="subheading">My technical writings about stuff I like.</span>
+                    <div class="post-heading">
+                        <h1>Starting my new blog</h1> 
+                        <h2 class="subheading">And shifting my blog from http://iam-khush.blogspot.in to Github</h2>
+                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 23 January, 2015</span>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="post-preview">
-                    <a href="posts/23-01-2015-shifting-blog.html">
-                        <h2 class="post-title">
-                            Starting my new blog
-                        </h2>
-                        <h3 class="post-subtitle">
-                            And shifting my blog from http://iam-khush.blogspot.in to Github.
-                        </h3>
-                    </a>
-                    <p class="post-meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on January 23, 2015</p>
+    <!-- Post Content -->
+    <article>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <p>Hey All. As the post topic says , I am now shifting my blog from blogger to Github.</p>
+
+                    <p>I have been blogging since college days. I first blogged on http://iam-khush.blogspot.in on 4th December, 2010. I like sharing technical difficulties I faced during my projects, or any other new things that I would be using them in future.</p>
+
+                    <p>Since my homesite is on http://ankushchadda.in , so I have decided to host this blog to blog.ankuschadda.in. This is an obvious decision </p>
+
+                    <h2 class="section-heading">Reasons to shift to Github</h2>
+                    
+                    <p>I have been thinking to do this from a long time. Ever since I first blogged , I have tried to make my blog look clean and impressive. Blogger themes are limited in number and are very Web 1.0. I dont see any new themes coming up, so I decided to use a new free theme from <a href="http://startbootstrap.com/template-overviews/clean-blog/">StartBootstrap</a>, and give github a try.</p>
+
+                    <p>I will slowly shifting all my posts here from blogger. I will either write a script to read the xml and create posts automatically or will select articles and copt them here one by one.</p>
+
+                    <h2 class="section-heading">Conventions to follow here</h2>
+
+                    <p>Since this is a gihub blog, lot of automation that comes with Blogger or any Blogging engine will be lacking here.So I will follow some conventions to keep the work clean and as smooth as possible.</p>
+
+                    <ul>
+                        <li>There is an index page which will lists the posts. So on making a new posts, an entry here is needed.</li>
+                        <li>For adding a new post, use a base template - base.posts.html. </li>
+                        <li>The posts name would be - dd-mm-yyyy-title.html and kept in the posts dir.</li>
+                        <li>Images are to be kept in a single dir called img. This helps to reuse images if needed.</li>
+                    </ul>
+                    
+                    <p>Happy blogging!!.</p>
                 </div>
-                <hr>
-                <!-- <div class="post-preview">
-                    <a href="post.html">
-                        <h2 class="post-title">
-                            I believe every human has a finite number of heartbeats. I don't intend to waste any of mine.
-                        </h2>
-                    </a>
-                    <p class="post-meta">Posted by <a href="#">Start Bootstrap</a> on September 18, 2014</p>
-                </div>
-                <hr>
-                <div class="post-preview">
-                    <a href="post.html">
-                        <h2 class="post-title">
-                            Science has not yet mastered prophecy
-                        </h2>
-                        <h3 class="post-subtitle">
-                            We predict too much for the next year and yet far too little for the next ten.
-                        </h3>
-                    </a>
-                    <p class="post-meta">Posted by <a href="#">Start Bootstrap</a> on August 24, 2014</p>
-                </div>
-                <hr>
-                <div class="post-preview">
-                    <a href="post.html">
-                        <h2 class="post-title">
-                            Failure is not an option
-                        </h2>
-                        <h3 class="post-subtitle">
-                            Many say exploration is part of our destiny, but it’s actually our duty to future generations.
-                        </h3>
-                    </a>
-                    <p class="post-meta">Posted by <a href="#">Start Bootstrap</a> on July 8, 2014</p>
-                </div> 
-                <hr> -->
-                <!-- Pager -->
-                <!-- <ul class="pager">
-                    <li class="next">
-                        <a href="#">Older Posts &rarr;</a>
-                    </li>
-                </ul> -->
             </div>
         </div>
-    </div>
+    </article>
 
     <hr>
 
@@ -171,20 +146,20 @@
                             </a>
                         </li>
                     </ul>
-                    <p class="copyright text-muted">Copyright &copy; Ankush CHadda 2015</p>
+                    <p class="copyright text-muted">Copyright &copy; Ankush Chadda 2015</p>
                 </div>
             </div>
         </div>
     </footer>
 
     <!-- jQuery -->
-    <script src="js/jquery.js"></script>
+    <script src="/js/jquery.js"></script>
 
     <!-- Bootstrap Core JavaScript -->
-    <script src="js/bootstrap.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
 
     <!-- Custom Theme JavaScript -->
-    <script src="js/clean-blog.min.js"></script>
+    <script src="/js/clean-blog.min.js"></script>
 
 </body>
 
