@@ -6,10 +6,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Shifting my blog from http://iam-khush.blogspot.in to Github">
+    <meta name="description" content="EC2, Automation">
     <meta name="author" content="Ankush Chadda">
 
-    <title>Starting my new blog</title>
+    <title>Starting and Closing EC2 machines with  - Automation Tips</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -70,9 +70,9 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <div class="post-heading">
-                        <h1>Starting my new blog</h1> 
-                        <h2 class="subheading">And shifting my blog from http://iam-khush.blogspot.in to Github</h2>
-                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 23 January, 2015</span>
+                        <h1>Starting and Stopping EC2 Instances with ELB and </h1> 
+                        <h2 class="subheading">Automation Tips Using Python and Boto Library</h2>
+                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 25 March, 2015</span>
                     </div>
                 </div>
             </div>
@@ -84,30 +84,65 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <p>Hey All. As the post topic says , I am now shifting my blog from blogger to Github.</p>
+                    <p>Hey Everybody. This is my second post in this new blog. I am very excited to share this information with you all.</p>
 
-                    <p>I have been blogging since college days. I first blogged on http://iam-khush.blogspot.in on 4th December, 2010. I like sharing technical difficulties I faced during my projects, or any other new things that I would be using them in future.</p>
+                    <h2 class="section-heading">Scenario</h2>
 
-                    <p>Since my homesite is on http://ankushchadda.in , so I have decided to host this blog to blog.ankuschadda.in. This is an obvious decision </p>
-
-                    <h2 class="section-heading">Reasons to shift to Github</h2>
-                    
-                    <p>I have been thinking to do this from a long time. Ever since I first blogged , I have tried to make my blog look clean and impressive. Blogger themes are limited in number and are very Web 1.0. I dont see any new themes coming up, so I decided to use a new free theme from <a href="http://startbootstrap.com/template-overviews/clean-blog/">StartBootstrap</a>, and give github a try.</p>
-
-                    <p>I will slowly shifting all my posts here from blogger. I will either write a script to read the xml and create posts automatically or will select articles and copt them here one by one.</p>
-
-                    <h2 class="section-heading">Conventions to follow here</h2>
-
-                    <p>Since this is a github blog, lot of automation that comes with Blogger or any Blogging engine will be lacking here.So I will follow some conventions to keep the work clean and as smooth as possible.</p>
+                    <p>I had to setup an automated process where I can start an EC2 instance along with several other steps, which are as follows - </p>
 
                     <ul>
-                        <li>There is an index page which will lists the posts. So on making a new posts, an entry here is needed.</li>
-                        <li>For adding a new post, use a base template - base.posts.html. </li>
-                        <li>The posts name would be - dd-mm-yyyy-title.html and kept in the posts dir.</li>
-                        <li>Images are to be kept in a single dir called img. This helps to reuse images if needed.</li>
+                        <li>Create a Security Group for EC2 instance. This was because I wanted the instance to serve requests only from the ELB.</li>
+                        <li>Create a seperate Security Group for ELB. This was because I wanted a custom rule for each ELB.</li>
+                        <li>Create an ELastic Load Balancer with required parameters.</li>
+                        <li>Most importantly I had to create a autoscale group, to give me automatic scaling, in case.</li>
                     </ul>
                     
-                    <p>Happy blogging!!.</p>
+                    <h2 class="section-heading">Setting up EC2 instance with ELB and Autoscaling Group.</h2>
+
+                    <p>Setting up of the instance is easy. We just need to have a specific format of doing things and things work. The following is how I did things - </p>
+
+                    <ul>
+                        <li>Get Zones/Zone Names that will be used.</li>
+                        <li>Create Both Security Groups</li>
+                        <li>Create Load Balancer</li>
+                        <li>Create AutoScale Group</li>
+                    </ul>
+                    <code>                        
+                        all_zones = conn_reg.get_all_zones()
+                        zoneStrings = []
+                        for zone in all_zones:
+                            zoneStrings.append(zone.name)
+
+                        sg1 = conn_reg.create_security_group(sg1_name, 'Skyrelr-%s for ec2'%skyrelr_instance.email)
+                        sg = conn_reg.create_security_group(skyrelr_instance.security_group, 'Skyrelr-%s for elb'%skyrelr_instance.email)
+                        sg.authorize('tcp', 80, 80, '0.0.0.0/0')
+
+                        lb = conn_elb.create_load_balancer(skyrelr_instance.loadbalancer_name,
+                                zoneStrings, settings.ELASTIC_LOAD_BALANCER['connection_forwarding'],
+                                security_groups=[sg.id])
+                        lb.configure_health_check(hc)
+                        skyrelr_instance.loadbalancer_dns = lb.dns_name
+    
+                        # EC2 instance only gets access from ELB
+                        conn_reg.authorize_security_group(
+                            group_name=sg1.name, src_security_group_name=sg.name, 
+                            src_security_group_owner_id=sg.owner_id)
+
+    
+                        lc = create_lc(skyrelr_instance.launch_configuration, sg1_name)
+                        conn_as.create_launch_configuration(lc)
+                        
+    
+                        asg = create_autoscalinggrp(skyrelr_instance.auto_scaling_group,
+                            skyrelr_instance.loadbalancer_name,
+                            zoneStrings, skyrelr_instance.launch_configuration)
+                        conn_as.create_auto_scaling_group(asg)
+
+                        return skyrelr_instance, sg
+
+                    </code>
+
+                    
                 </div>
             </div>
             <div id="disqus_thread"></div>
