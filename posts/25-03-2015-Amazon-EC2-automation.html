@@ -34,7 +34,7 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top navbar-inverse">
         <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header page-scroll">
@@ -65,12 +65,12 @@
 
     <!-- Page Header -->
     <!-- Set your background image for this header on the line below. -->
-    <header class="intro-header" style="background-image: url('/img/post-bg.jpg')">
+    <header class="intro-header" style="background-image: url('/img/automation.jpg')">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <div class="post-heading">
-                        <h1>Starting and Stopping EC2 Instances with ELB and </h1> 
+                        <h1>Starting and Stopping EC2 Instances</h1> 
                         <h2 class="subheading">Automation Tips Using Python and Boto Library</h2>
                         <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 25 March, 2015</span>
                     </div>
@@ -91,58 +91,145 @@
                     <p>I had to setup an automated process where I can start an EC2 instance along with several other steps, which are as follows - </p>
 
                     <ul>
-                        <li>Create a Security Group for EC2 instance. This was because I wanted the instance to serve requests only from the ELB.</li>
+                        <li>Create a Security Group for EC2 instance. This was because I wanted the instance to serve requests coming only from the ELB.</li>
                         <li>Create a seperate Security Group for ELB. This was because I wanted a custom rule for each ELB.</li>
                         <li>Create an ELastic Load Balancer with required parameters.</li>
-                        <li>Most importantly I had to create a autoscale group, to give me automatic scaling, in case.</li>
+                        <li>Most importantly I had to create a autoscale group, to give me automatic scaling, in case things break down.</li>
+                        <li>Lastly redirect the user to ELB once the setup is done.</li>
                     </ul>
-                    
+
+                    <p>Later on I also had to automate the deletion of the instance. This meant taking down everything, EC2, ELB etc. I will describe this in the next post <a href="">here</a></p>
+                    <h2 class="section-heading">Making required base functions</h2>
+                    <p>Boto has different classes for each type of AWS structure, like one HealthCheck, LaunchConfiguration etc. So it was better to make some configurable functions to create them. Very Useful later on.</p>
+
+                    <pre class="prettyprint linenums">
+CONN_REG = lambda region: boto.ec2.connect_to_region(
+              region_name=region,
+              aws_access_key_id=settings.AWS_ACCESS_KEY,
+              aws_secret_access_key=settings.AWS_SECRET_KEY)
+
+# Dont use ELBConnection because we want to connect to a specific region, and 
+# by default ELBConnection takes us-east-2 , I think.
+# CONN_ELB = ELBConnection(aws_access_key_id=settings.AWS_ACCESS_KEY, aws_secret_access_key=settings.AWS_SECRET_KEY)
+CONN_ELB = lambda region: boto.ec2.elb.connect_to_region(
+    aws_access_key_id=settings.AWS_ACCESS_KEY,
+    aws_secret_access_key=settings.AWS_SECRET_KEY,
+    region_name=region)
+
+# Similar reason for not using AutoScaleConnection as for not using ELBConnection. See Above.
+# CONN_AS = AutoScaleConnection(aws_access_key_id=settings.AWS_ACCESS_KEY, aws_secret_access_key=settings.AWS_SECRET_KEY)
+CONN_AS = lambda region: boto.ec2.autoscale.connect_to_region(
+    aws_access_key_id=settings.AWS_ACCESS_KEY,
+    aws_secret_access_key=settings.AWS_SECRET_KEY,
+    region_name=region)
+
+hc = HealthCheck('healthCheck',
+    interval=settings.ELASTIC_LOAD_BALANCER['interval'],
+    target=settings.ELASTIC_LOAD_BALANCER['health_check_target'],
+    timeout=settings.ELASTIC_LOAD_BALANCER['timeout'])
+
+create_lc = lambda lc_name, sg: LaunchConfiguration(
+    name=lc_name,
+    image_id=settings.AUTOSCALING_AMI['id'],
+    key_name=settings.AUTOSCALING_AMI['access_key'], security_groups=[sg], 
+    instance_type=settings.AUTOSCALING_AMI['instance_type'],
+    instance_monitoring=settings.AUTOSCALING_AMI['instance_monitoring'])
+
+
+create_autoscalinggrp = lambda autosgname, lbname, zoneStrings, lc: AutoScalingGroup(
+    group_name=autosgname,
+    load_balancers=[lbname],
+    availability_zones=zoneStrings,
+    launch_config=lc,
+    min_size=1,
+    max_size=1)
+                    </pre>
                     <h2 class="section-heading">Setting up EC2 instance with ELB and Autoscaling Group.</h2>
 
                     <p>Setting up of the instance is easy. We just need to have a specific format of doing things and things work. The following is how I did things - </p>
 
                     <ul>
+                        <li>Decide which region you wish to have EC2 in.</li>
                         <li>Get Zones/Zone Names that will be used.</li>
                         <li>Create Both Security Groups</li>
                         <li>Create Load Balancer</li>
                         <li>Create AutoScale Group</li>
                     </ul>
-                    <code>                        
-                        all_zones = conn_reg.get_all_zones()
-                        zoneStrings = []
-                        for zone in all_zones:
-                            zoneStrings.append(zone.name)
+                    <pre class="prettyprint linenums">
+def setup_instance(*args):
+    conn_reg = CONN_REG(region_name) # EC2 Connection   
+    conn_as = CONN_AS(region_name) # AutoScaleConnection
+    conn_elb = CONN_ELB(region_name) # ELB Connection                    
 
-                        sg1 = conn_reg.create_security_group(sg1_name, 'Skyrelr-%s for ec2'%skyrelr_instance.email)
-                        sg = conn_reg.create_security_group(skyrelr_instance.security_group, 'Skyrelr-%s for elb'%skyrelr_instance.email)
-                        sg.authorize('tcp', 80, 80, '0.0.0.0/0')
+    all_zones = conn_reg.get_all_zones()
+    zoneStrings = []
+    for zone in all_zones:
+        zoneStrings.append(zone.name)
 
-                        lb = conn_elb.create_load_balancer(skyrelr_instance.loadbalancer_name,
-                                zoneStrings, settings.ELASTIC_LOAD_BALANCER['connection_forwarding'],
-                                security_groups=[sg.id])
-                        lb.configure_health_check(hc)
-                        skyrelr_instance.loadbalancer_dns = lb.dns_name
-    
-                        # EC2 instance only gets access from ELB
-                        conn_reg.authorize_security_group(
-                            group_name=sg1.name, src_security_group_name=sg.name, 
-                            src_security_group_owner_id=sg.owner_id)
+    sg1 = conn_reg.create_security_group('SG-EC2', 'Securty group for EC2')
+    sg = conn_reg.create_security_group('SG-ELB', 'Security group for ELB')
+    #ELB can accept request from anywhere
+    sg.authorize('tcp', 80, 80, '0.0.0.0/0')
 
-    
-                        lc = create_lc(skyrelr_instance.launch_configuration, sg1_name)
-                        conn_as.create_launch_configuration(lc)
-                        
-    
-                        asg = create_autoscalinggrp(skyrelr_instance.auto_scaling_group,
-                            skyrelr_instance.loadbalancer_name,
-                            zoneStrings, skyrelr_instance.launch_configuration)
-                        conn_as.create_auto_scaling_group(asg)
+    lb = conn_elb.create_load_balancer(
+        loadbalancer_name,
+        zoneStrings,
+        settings.ELASTIC_LOAD_BALANCER, #Your own Settings
+        security_groups=[sg.id])
 
-                        return skyrelr_instance, sg
+    lb.configure_health_check(hc)
 
-                    </code>
+    # ElB will be available here.
+    loadbalancer_dns = lb.dns_name
 
-                    
+    # EC2 instance only gets access from ELB only
+    conn_reg.authorize_security_group(
+        group_name=sg1.name,
+        src_security_group_name=sg.name, 
+        src_security_group_owner_id=sg.owner_id)
+
+
+    lc = create_lc(launch_configuration, sg1_name)
+    conn_as.create_launch_configuration(lc)
+
+
+    asg = create_autoscalinggrp(
+        auto_scaling_group,
+        loadbalancer_name,
+        zoneStrings,
+        launch_configuration)
+    conn_as.create_auto_scaling_group(asg)
+                    </pre>
+
+                    <h2 class="section-heading">Automating the Instance startup</h2>
+                    <p>We already have a method called setup_instance now. We just have to call it with approprate params now, which are - </p>
+                    <ul>
+                        <li>Region Name</li>
+                        <li>Autoscaling group Name</li>
+                        <li>Security Group Names for both EC2 or ELB</li>
+                        <li>ELB Name</li>
+                        <li>Launch Configuarion Name</li>
+                    </ul>
+                    <h2 class="section-heading">Trickiest Step</h2>
+                    <p>In my scenaro, I had to redirect the user to ELB once it gets initialized. But AWS runs some checks before the instance becomes accesible. Since we are actually accessing EC2 via ELB, many a times, ELB was accessible but EC2 wasnt ready.</p>
+
+                    <p>To overcome this, I had to make use of a very crude solution. A very basic hit and try method. </p>
+
+                    <pre class="prettyprint linenums">
+status_code = 100 #Fake status code to go into loop            
+
+while status_code != 200:
+    try:
+        print "Still not ready, will try after 10 secs"
+        time.sleep(10)
+        status_code = requests.head(url).status_code
+    except:
+        pass    
+                    </pre>
+
+                    <p>And so, here it is, automated way to start EC2 instance with ElB and others.</p>
+
+                    <p>Next, I will automate the way to take down the instance. You can check it <a href="">here</a>.</p>
                 </div>
             </div>
             <div id="disqus_thread"></div>
@@ -198,6 +285,9 @@
 
     <!-- Custom Theme JavaScript -->
     <script src="/js/clean-blog.min.js"></script>
+
+    <!-- Code Prettifier -->
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
