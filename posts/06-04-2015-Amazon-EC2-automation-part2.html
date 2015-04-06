@@ -6,16 +6,17 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Shifting my blog from http://iam-khush.blogspot.in to Github">
     <meta name="author" content="Ankush Chadda">
+    <meta name="keywords" content="AWS, EC2, Automation, Boto, Python, ELB">
+    <meta name="description" content="AWS Automation Tips Using Python and Boto Library">
 
-    <title>Starting my new blog</title>
+    <title>Automation tips on Shutting down EC2 and ELB instances</title>
 
     <!-- Bootstrap Core CSS -->
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link href="../css/clean-blog.min.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
@@ -44,7 +45,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/index.html">WebPad</a>
+                <a class="navbar-brand" href="index.html">WebPad</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -65,14 +66,14 @@
 
     <!-- Page Header -->
     <!-- Set your background image for this header on the line below. -->
-    <header class="intro-header" style="background-image: url('/img/post-bg.jpg')">
+    <header class="intro-header" style="background-image: url('../img/post-bg.jpg')">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <div class="post-heading">
-                        <h1>Starting my new blog</h1> 
-                        <h2 class="subheading">And shifting my blog from http://iam-khush.blogspot.in to Github</h2>
-                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 23 January, 2015</span>
+                        <h1>Automation tips on Shutting down EC2 and ELB instances</h1> 
+                        <h2 class="subheading">Using Boto and Python</h2>
+                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 06 April, 2015</span>
                     </div>
                 </div>
             </div>
@@ -84,40 +85,41 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <p>Hey All. As the post topic says , I am now shifting my blog from blogger to Github.</p>
+                    <p>This post is in continuation of </p>
 
-                    <p>I have been blogging since college days. I first blogged on http://iam-khush.blogspot.in on 4th December, 2010. I like sharing technical difficulties I faced during my projects, or any other new things that I would be using them in future.</p>
+                    <h2 class="section-heading">The Final Frontier</h2>
 
-                    <p>Since my homesite is on http://ankushchadda.in , so I have decided to host this blog to blog.ankuschadda.in. This is an obvious decision </p>
+                    <p>Spaceflights cannot be stopped. This is not the work of any one man or even a group of men. It is a historical process which mankind is carrying out in accordance with the natural laws of human development.</p>
 
-                    <h2 class="section-heading">Reasons to shift to Github</h2>
-                    
-                    <p>I have been thinking to do this from a long time. Ever since I first blogged , I have tried to make my blog look clean and impressive. Blogger themes are limited in number and are very Web 1.0. I dont see any new themes coming up, so I decided to use a new free theme from <a href="http://startbootstrap.com/template-overviews/clean-blog/">StartBootstrap</a>, and give github a try.</p>
+                    <h2 class="section-heading">Reaching for the Stars</h2>
 
-                    <p>I will slowly shifting all my posts here from blogger. I will either write a script to read the xml and create posts automatically or will select articles and copt them here one by one.</p>
+                    <p>As we got further and further away, it [the Earth] diminished in size. Finally it shrank to the size of a marble, the most beautiful you can imagine. That beautiful, warm, living object looked so fragile, so delicate, that if you touched it with a finger it would crumble and fall apart. Seeing this has to change a man.</p>
 
-                    <h2 class="section-heading">Conventions to follow here</h2>
+                    <a href="#">
+                        <img class="img-responsive" src="img/post-sample-image.jpg" alt="">
+                    </a>
+                    <span class="caption text-muted">To go places and do things that have never been done before – that’s what living is all about.</span>
 
-                    <p>Since this is a github blog, lot of automation that comes with Blogger or any Blogging engine will be lacking here.So I will follow some conventions to keep the work clean and as smooth as possible.</p>
 
-                    <ul>
-                        <li>There is an index page which will lists the posts. So on making a new posts, an entry here is needed.</li>
-                        <li>For adding a new post, use a base template - base.posts.html. </li>
-                        <li>The posts name would be - dd-mm-yyyy-title.html and kept in the posts dir.</li>
-                        <li>Images are to be kept in a single dir called img. This helps to reuse images if needed.</li>
-                    </ul>
-                    
-                    <p>Happy blogging!!.</p>
+                    <p>Placeholder text by <a href="http://spaceipsum.com/">Space Ipsum</a>. Photographs by <a href="https://www.flickr.com/photos/nasacommons/">NASA on The Commons</a>.</p>
                 </div>
             </div>
-            <div id="disqus_thread"></div>
-            <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         </div>
-
     </article>
 
     <hr>
-    
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'ankushchaddablog';
+        var disqus_url = 'http://blog.ankushchadda.in/posts/06-04-2015-Amazon-EC2-automation-part2.html';
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -149,7 +151,7 @@
                             </a>
                         </li>
                     </ul>
-                    <p class="copyright text-muted">Copyright &copy; Ankush Chadda 2015</p>
+                    <p class="copyright text-muted">Copyright &copy; Ankush CHadda 2015</p>
                 </div>
             </div>
         </div>
@@ -163,24 +165,17 @@
 
     <!-- Custom Theme JavaScript -->
     <script src="/js/clean-blog.min.js"></script>
+    
     <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-56883493-2', 'auto');
-        ga('require', 'displayfeatures');
-        ga('send', 'pageview');
+      ga('create', 'UA-56883493-2', 'auto');
+      ga('require', 'displayfeatures');
+      ga('send', 'pageview');
 
-        var disqus_shortname = 'ankushchaddablog';
-        var disqus_url = 'http://blog.ankushchadda.in/posts/23-01-2015-shifting-blog.html';
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
     </script>
 </body>
 
