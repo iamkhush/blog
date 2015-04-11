@@ -159,10 +159,10 @@ def delete_this_instance(*args):
 
                     <h2 class="section-heading">Difficulties</h2>
                     <p>Deleting the instances programitically is not as straightforward as it looks. 
-                        <ul>Issues - 
-                            <ol>There is a dependency of one type of instance on other. So you cant delete ELB until ASG groups have been deleted.</ol>
-                            <ol>Also, each type of instance takes its own time, so we have to recursively check and then proceed.</ol>
-                        </ul>
+                        <ol>Issues - 
+                            <li>There is a dependency of one type of instance on other. So you cant delete ELB until ASG groups have been deleted.</li>
+                            <li>Also, each type of instance takes its own time, so we have to recursively check and then proceed.</li>
+                        </ol>
                     </p>
 
                     <p><ul>
