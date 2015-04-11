@@ -99,54 +99,52 @@
 
                     <pre class="prettyprint linenums">
 def delete_this_instance(*args):
-    ## deletes the skyrelr instance
-    
+   
     conn_reg = CONN_REG(region_name)
     conn_as = CONN_AS(region_name)
     conn_elb = CONN_ELB(region_name)
 
-    try:
-        # delete auto scaling group
+    # delete auto scaling group
+    asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
+    asg.shutdown_instances()
+    while asg.instances:
+        time.sleep(2)
         asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
-        asg.shutdown_instances()
-        while asg.instances:
-            time.sleep(2)
-            asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
 
-        # check all activities of asg
-        loop_var = True
-        while loop_var:
-            all_activities = conn_as.get_all_activities(asg)
-            print 'all_activities-', all_activities, 'inside'
-            loop_var = False
-            for activity in all_activities:
-                if activity.progress != '100':
-                    print 'activity id-%s, progress-%s'%(activity.activity_id, activity.progress)
-                    loop_var = True
-            time.sleep(5)
-        asg.delete()
+    # check all activities of asg
+    loop_var = True
+    while loop_var:
+        all_activities = conn_as.get_all_activities(asg)
+        print 'all_activities-', all_activities, 'inside'
+        loop_var = False
+        for activity in all_activities:
+            if activity.progress != '100':
+                print 'activity id-%s, progress-%s'%(activity.activity_id, activity.progress)
+                loop_var = True
+        time.sleep(5)
+    asg.delete()
 
-        # delete load balancer
-        lb = conn_elb.get_all_load_balancers([loadbalancer_name])[0]
-        lb.delete()
+    # delete load balancer
+    lb = conn_elb.get_all_load_balancers([loadbalancer_name])[0]
+    lb.delete()
 
-        # delete launch config
-        lc = conn_as.get_all_launch_configurations(names=[launch_configuration])[0]
-        lc.delete()
+    # delete launch config
+    lc = conn_as.get_all_launch_configurations(names=[launch_configuration])[0]
+    lc.delete()
 
-        # wait for network interfaces to die
-        sg = conn_reg.get_all_security_groups(groupnames=[security_group])[0]
+    # wait for network interfaces to die
+    sg = conn_reg.get_all_security_groups(groupnames=[security_group])[0]
+    ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
+    while ni:
+        time.sleep(2)
         ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
-        while ni:
-            time.sleep(2)
-            ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
 
-        # delete ec2 sg first
-        sg1 = conn_reg.get_all_security_groups(groupnames=['%s1'%security_group])[0]
-        sg1.delete()
+    # delete ec2 sg first
+    sg1 = conn_reg.get_all_security_groups(groupnames=['%s1'%security_group])[0]
+    sg1.delete()
 
-        # delete security group for elb
-        sg.delete()
+    # delete security group for elb
+    sg.delete()
 
                     </pre>
                     <p>Important thing to note here is the sequence of deleting the instance. We deleted in the following sequence - 
