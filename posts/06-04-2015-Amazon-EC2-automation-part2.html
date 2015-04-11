@@ -149,11 +149,11 @@ def delete_this_instance(*args):
                     </pre>
                     <p>Important thing to note here is the sequence of deleting the instance. We deleted in the following sequence - 
                     <ul>
+                        <li>Shutdown EC2 Instances</li>
                         <li>Delete AutoScaling Group</li>
-                        <li>Delete ELB</li>
                         <li>Then the launch configuration</li>
                         <li>Then all network interfaces</li>
-                        <li>Atlast the EC2 instance</li>
+                        <li>Atlast delete the Security Groups</li>
                     </ul>
                     </p>
 
