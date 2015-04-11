@@ -85,23 +85,99 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <p>This post is in continuation of </p>
+                    <p>This post is in continuation of my previous <a href="/posts/25-03-2015-Amazon-EC2-automation.html">post</a>, in which I discussed automation techniques to start EC2 instances along with ELB etc.</p>
 
-                    <h2 class="section-heading">The Final Frontier</h2>
+                    <h2 class="section-heading">Scenario</h2>
 
-                    <p>Spaceflights cannot be stopped. This is not the work of any one man or even a group of men. It is a historical process which mankind is carrying out in accordance with the natural laws of human development.</p>
+                    <p>We have been able to setup an EC2 machine , which only receives request from a ELB. This is done by making a security group.</p>
 
-                    <h2 class="section-heading">Reaching for the Stars</h2>
+                    <p>Next, we created a Launching configuration and an AutoScaling group.</p>
 
-                    <p>As we got further and further away, it [the Earth] diminished in size. Finally it shrank to the size of a marble, the most beautiful you can imagine. That beautiful, warm, living object looked so fragile, so delicate, that if you touched it with a finger it would crumble and fall apart. Seeing this has to change a man.</p>
+                    <h2 class="section-heading">What do we want now?</h2>
 
-                    <a href="#">
-                        <img class="img-responsive" src="img/post-sample-image.jpg" alt="">
-                    </a>
-                    <span class="caption text-muted">To go places and do things that have never been done before – that’s what living is all about.</span>
+                    <p>Now I will try to delete the instance programatically. Here is the code - </p>
 
+                    <pre class="prettyprint linenums">
+def delete_this_instance(*args):
+    ## deletes the skyrelr instance
+    
+    conn_reg = CONN_REG(region_name)
+    conn_as = CONN_AS(region_name)
+    conn_elb = CONN_ELB(region_name)
 
-                    <p>Placeholder text by <a href="http://spaceipsum.com/">Space Ipsum</a>. Photographs by <a href="https://www.flickr.com/photos/nasacommons/">NASA on The Commons</a>.</p>
+    try:
+        # delete auto scaling group
+        asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
+        asg.shutdown_instances()
+        while asg.instances:
+            time.sleep(2)
+            asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
+
+        # check all activities of asg
+        loop_var = True
+        while loop_var:
+            all_activities = conn_as.get_all_activities(asg)
+            print 'all_activities-', all_activities, 'inside'
+            loop_var = False
+            for activity in all_activities:
+                if activity.progress != '100':
+                    print 'activity id-%s, progress-%s'%(activity.activity_id, activity.progress)
+                    loop_var = True
+            time.sleep(5)
+        asg.delete()
+
+        # delete load balancer
+        lb = conn_elb.get_all_load_balancers([loadbalancer_name])[0]
+        lb.delete()
+
+        # delete launch config
+        lc = conn_as.get_all_launch_configurations(names=[launch_configuration])[0]
+        lc.delete()
+
+        # wait for network interfaces to die
+        sg = conn_reg.get_all_security_groups(groupnames=[security_group])[0]
+        ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
+        while ni:
+            time.sleep(2)
+            ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
+
+        # delete ec2 sg first
+        sg1 = conn_reg.get_all_security_groups(groupnames=['%s1'%security_group])[0]
+        sg1.delete()
+
+        # delete security group for elb
+        sg.delete()
+
+                    </pre>
+                    <p>Important thing to note here is the sequence of deleting the instance. We deleted in the following sequence - 
+                    <ul>
+                        <li>Delete AutoScaling Group</li>
+                        <li>Delete ELB</li>
+                        <li>Then the launch configuration</li>
+                        <li>Then all network interfaces</li>
+                        <li>Atlast the EC2 instance</li>
+                    </ul>
+                    </p>
+
+                    <h2 class="section-heading">Difficulties</h2>
+                    <p>Deleting the instances programitically is not as straightforward as it looks. 
+                        <ul>Issues - 
+                            <ol>There is a dependency of one type of instance on other. So you cant delete ELB until ASG groups have been deleted.</ol>
+                            <ol>Also, each type of instance takes its own time, so we have to recursively check and then proceed.</ol>
+                        </ul>
+                    </p>
+
+                    <p><ul>
+                        <li>For deleting AutoScaling Groups i.e EC2 instances- </li>
+                        <ul>
+                            <li>Recursively check for groups after 2 secs.</li>
+                            <li>Once the groups are down, check for any other pending activites. Recursively wait for this as well. This is the slowest of all steps.</li>
+                        </ul>
+                        <li>Deleting ELB and Launch Configs is easy</li>
+                        <li>Before Deleting all security groups, we will have to wait for all network interfaces to die.</li>
+                        <li>Done!!.</li>
+                    </ul></p>
+
                 </div>
             </div>
         </div>
@@ -173,7 +249,7 @@
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
       ga('create', 'UA-56883493-2', 'auto');
-      ga('require', 'displayfeatures');
+      ga('require', 'displayfeatures'); 
       ga('send', 'pageview');
 
     </script>
