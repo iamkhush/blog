@@ -6,11 +6,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="My Notes About Postgres Indexes, PL/pgSQL and other learnings">
     <meta name="author" content="Ankush Chadda">
-    <meta name="keywords" content="AWS, EC2, Automation, Boto, Python, ELB">
-    <meta name="description" content="AWS Automation Tips Using Python and Boto Library">
+    <meta name="keywords" content="">
 
-    <title>Automation tips on Shutting down EC2 and ELB instances</title>
+    <title>Postgres Indexes, PL/pgSQL and other learnings</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -18,7 +18,7 @@
     <!-- Custom CSS -->
     <link href="../css/clean-blog.min.css" rel="stylesheet">
 
-    <!-- Custom Fonts -->
+    <!-- Custom Fonts -->   
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
@@ -71,9 +71,9 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <div class="post-heading">
-                        <h1>Automation tips on Shutting down EC2 and ELB instances</h1> 
-                        <h2 class="subheading">Using Boto and Python</h2>
-                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on 06 April, 2015</span>
+                        <h1>Postgres Indexes, PL/pgSQL and other learnings</h1> 
+                        <h2 class="subheading"></h2>
+                        <span class="meta">Posted by <a href="http://ankushchadda.in">Ankush Chadda</a> on Febuary 2nd, 2016</span>
                     </div>
                 </div>
             </div>
@@ -85,109 +85,76 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <p>This post is in continuation of my previous <a href="/posts/25-03-2015-Amazon-EC2-automation.html">post</a>, in which I discussed automation techniques to start EC2 instances along with ELB etc.</p>
+                    <p>Recently I had to do a bit of reading on building Indexes in Postgres. Intrestingly I found some striking features about indexing types in Postgres</p>
 
-                    <h2 class="section-heading">Scenario</h2>
+                    <h2 class="section-heading">Extensions</h2>
 
-                    <p>We have been able to setup an EC2 machine , which only receives request from a ELB. This is done by making a security group.</p>
+                    <p>Postgres has a collection of extensions/modules. These are basically set of functions. One such module is pg_trgm. Quoting from the documentation-
+                    <span style="text-decoration: underline;">"pg_trgm provides functions and operators for determining the similarity of ASCII alphanumeric text based on trigram matching, as well as index operator classes that support fast searching for similar strings"
+                    (<a href="http://www.postgresql.org/docs/9.1/static/pgtrgm.html">Documentation</a>)</span></p>
+                    
+                    <p>To use extensions one has to enable / create extensions. Extensions like pg_trgm are built in, meaning they dont have any other depenedencies, you can build them   whenever you need to use them.</p>
 
-                    <p>Next, we created a Launching configuration and an AutoScaling group.</p>
+                    <pre class="prettyprint linenums">CREATE EXTENSION pg_trgm;</pre>
 
-                    <h2 class="section-heading">What do we want now?</h2>
+                    <p>One interesting function that I would like to experiment on is <pre>similarity</pre> which  basically returns a number ( between 0 and 1 ) indicating how similar the two arguments are, 1 for when comparing identical strings</p>
 
-                    <p>Now I will try to delete the instance programatically. Here is the code - </p>
+                    <h2 class="section-heading">The Trigram Indexes</h2>
 
-                    <pre class="prettyprint linenums">
-def delete_this_instance(*args):
-   
-    conn_reg = CONN_REG(region_name)
-    conn_as = CONN_AS(region_name)
-    conn_elb = CONN_ELB(region_name)
+                    <p>Now apart from this just plug n play functionality, pg_trgm also provides us GIN and GiST indexes. They allow very fast similarity searches ( using the method above) and also support LIKE and ILIKE queries.</p>
 
-    # delete auto scaling group
-    asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
-    asg.shutdown_instances()
-    while asg.instances:
-        time.sleep(2)
-        asg = conn_as.get_all_groups(names=[auto_scaling_group])[0]
+                    <p>As stated in the documentation, GIN is generally faster than GiST index, but GIN is much more suited for static data.</p>
 
-    # check all activities of asg
-    loop_var = True
-    while loop_var:
-        all_activities = conn_as.get_all_activities(asg)
-        print 'all_activities-', all_activities, 'inside'
-        loop_var = False
-        for activity in all_activities:
-            if activity.progress != '100':
-                print 'activity id-%s, progress-%s'%(activity.activity_id, activity.progress)
-                loop_var = True
-        time.sleep(5)
-    asg.delete()
+                    <p>For my use case , I needed to implement a full text search, from 5 million rows. Using the index , search got completed in couple of ms. I was quite happy with the results.  In some trial runs without index, result time would be 17 secs, and with index be 8ms. </p>
 
-    # delete load balancer
-    lb = conn_elb.get_all_load_balancers([loadbalancer_name])[0]
-    lb.delete()
+                    <pre class="prettyprint linenums">CREATE INDEX trgm_idx ON test_trgm USING gin (t gin_trgm_ops);</pre>
+                    <span class="caption text-muted">Command to create gin index</span>
 
-    # delete launch config
-    lc = conn_as.get_all_launch_configurations(names=[launch_configuration])[0]
-    lc.delete()
+                    <p>Another good link for indexing strategies - <a href="http://blog.2ndquadrant.com/text-search-strategies-in-postgresql/">here</a></p>
+                    <p>Documentation about text search - <a href="http://www.postgresql.org/docs/9.5/static/textsearch.html">here</a></p>
 
-    # wait for network interfaces to die
-    sg = conn_reg.get_all_security_groups(groupnames=[security_group])[0]
-    ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
-    while ni:
-        time.sleep(2)
-        ni = conn_reg.get_all_network_interfaces(filters={'group-id':sg.id})
+                    <h2 class="section-heading">Cons of the Trigram Indexes</h2>
 
-    # delete ec2 sg first
-    sg1 = conn_reg.get_all_security_groups(groupnames=['%s1'%security_group])[0]
-    sg1.delete()
-
-    # delete security group for elb
-    sg.delete()
-
-                    </pre>
-                    <p>Important thing to note here is the sequence of deleting the instance. We deleted in the following sequence - 
+                    <p>Even though using GIN solved the issues, there were two issues that came to me</p>
                     <ul>
-                        <li>Shutdown EC2 Instances</li>
-                        <li>Delete AutoScaling Group</li>
-                        <li>Then the launch configuration</li>
-                        <li>Then all network interfaces</li>
-                        <li>Atlast delete the Security Groups</li>
+                        <li>Firstly, the size of GIN Index was around 2GBs for a table having size of 700MBs only</li>
+                        <li>Secondly, since this is a trigram index, search for words with less than 3 letters couldnt use the index.</li>
                     </ul>
-                    </p>
 
-                    <h2 class="section-heading">Difficulties</h2>
-                    <p>Deleting the instances programitically is not as straightforward as it looks. 
-                        <ol>Issues - 
-                            <li>There is a dependency of one type of instance on other. So you cant delete ELB until ASG groups have been deleted.</li>
-                            <li>Also, each type of instance takes its own time, so we have to recursively check and then proceed.</li>
-                        </ol>
-                    </p>
+                    <p>For the second problem, we used a simple hack. Since the use of index was giving much better performance, we decided to search for words less than 3 letters, in memory/code.</p>
 
-                    <p><ul>
-                        <li>For deleting AutoScaling Groups i.e EC2 instances- </li>
-                        <ul>
-                            <li>Recursively check for groups after 2 secs.</li>
-                            <li>Once the groups are down, check for any other pending activites. Recursively wait for this as well. This is the slowest of all steps.</li>
-                        </ul>
-                        <li>Deleting ELB and Launch Configs is easy</li>
-                        <li>Before Deleting all security groups, we will have to wait for all network interfaces to die.</li>
-                        <li>Done!!.</li>
-                    </ul></p>
+                    <h2 class="section-heading">Partial Indexes</h2>
+
+                    <p>Partial indexes, as the name suggests, builds indexes for only rows that fall under the condition( called  predicate ) we mention while creating the index.</p>
+
+                    <pre class="prettyprint linenums">CREATE INDEX orders_unbilled_index ON orders (order_nr)
+    WHERE billed is not true;</pre>
+
+                    <p>They save space and are also easier to update as compared to full table indexes.</p>
+
+                    <h2 class="section-heading">PL/pgSQL - SQL Procedural Language</h2>
+
+                    <p>One last thing I learnt was PL/pgSQL. Its a procedural language in Postgres. I wanted to build partial indexes and wanted to iterate over loops. So I wrote a procedural script and ran it. Some pointers and examples below-</p>
+
+                    <pre class="prettyprint linenums">do $$
+begin 
+for i in 1..97 loop
+execute format('drop index table_%s',i);
+end loop;
+end;
+$$ LANGUAGE plpgsql;</pre>
+                    <span class="caption text-muted">Dropping indexes with name table_1, table_2</span>                    
+                    
+                    <p>Helpful documentation and examples can be seen <a href="http://www.postgresql.org/docs/current/static/plpgsql.html">here</a></p>
 
                 </div>
             </div>
             <div id="disqus_thread"></div>
             <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         </div>
-        
     </article>
 
     <hr>
-    <script type="text/javascript">
-        
-    </script>
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -244,11 +211,10 @@ def delete_this_instance(*args):
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
         ga('create', 'UA-56883493-2', 'auto');
-        ga('require', 'displayfeatures'); 
+        ga('require', 'displayfeatures');
         ga('send', 'pageview');
-
         var disqus_shortname = 'ankushchaddablog';
-        var disqus_url = 'http://blog.ankushchadda.in/posts/06-04-2015-Amazon-EC2-automation-part2.html';
+        var disqus_url = 'http://blog.ankushchadda.in/posts/01-2-2016-postgres-notes.html';
         /* * * DON'T EDIT BELOW THIS LINE * * */
         (function() {
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
